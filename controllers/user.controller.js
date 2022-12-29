@@ -3,9 +3,15 @@ const User = require('../models/user.model');
 const userRouter = express.Router();
 
 userRouter.post('/user', async (req, res) => {
-    const user = User(req.body);
-    const data = await user.save()
-    res.send(data)
+    try {
+        const user = User(req.body);
+        const data = await user.save()
+        res.send(data).status(201);
+        
+    } catch (error) {
+        res.send(error.message);
+    }
+    
 })
 
 module.exports = userRouter

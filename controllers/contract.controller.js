@@ -6,14 +6,17 @@ contractRouter.post('/contract', async (req, res) => {
     try {
         const user = Contracts(req.body);
         const data = await user.save()
-        res.send(data).status(401)
+        res.send(data).status(201)
     } catch (error) {
-        res.send(error).status(404)
+        res.send(error.message).status(404)
     }
 
 })
 contractRouter.get('/contract/all', async (req, res) => {
     const { n } = req.body
+    if (n === undefined) {
+        return res.send({ message: "Please enter the number of results you want using the 'n' key " })
+    }
     try {
         const data = await Contracts.aggregate([
             {
@@ -49,9 +52,9 @@ contractRouter.get('/contract/all', async (req, res) => {
             delete ele.count
             delete ele._id
         })
-        res.send(data)
+        res.send(data).status(201)
     } catch (error) {
-        res.send(error)
+        res.send(error.message).status(404)
     }
 
 })
@@ -59,7 +62,14 @@ contractRouter.get('/contract/all', async (req, res) => {
 contractRouter.get('/contract/count', async (req, res) => {
 
     const { n } = req.body
+    if (n === undefined) {
+        return res.send({ message:"Please enter the number of results you want using the 'n' key "})
+    }
+    if (n <= 0) {
+        return res.send({ message: "n should be greater than 0" })
+    }
     try {
+        
         const data = await Contracts.aggregate([
             {
                 $group:
@@ -104,5 +114,77 @@ contractRouter.get('/contract/count', async (req, res) => {
 
 })
 
+contractRouter.get('/contract/lender', async (req, res) => {
+
+
+    try {
+        const data = await Contracts.aggregate([
+            {
+                $group:
+                {
+                    _id: "$lenderId",
+
+                },
+
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "users"
+                },
+            },
+
+        ])
+
+
+        data.forEach((ele) => {
+            ele.LenderName = ele.users[0].name
+            delete ele.users
+            delete ele._id
+        })
+        res.send(data)
+    } catch (error) {
+        res.send(error.message)
+    }
+
+})
+
+contractRouter.get('/contract/borrower', async (req, res) => {
+
+    try {
+        const data = await Contracts.aggregate([
+            {
+                $group:
+                {
+                    _id: "$borrowerId",
+
+                },
+
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "users"
+                },
+            },
+
+        ])
+
+
+        data.forEach((ele) => {
+            ele.BorrowerName = ele.users[0].name
+            delete ele.users
+            delete ele._id
+        })
+        res.send(data)
+    } catch (error) {
+        res.send(error.message)
+    }
+
+})
 
 module.exports = contractRouter;
