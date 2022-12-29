@@ -2,6 +2,7 @@ const express = require('express');
 const User = require('../models/user.model');
 const userRouter = express.Router();
 
+//create user
 userRouter.post('/user', async (req, res) => {
     try {
         const user = User(req.body);
