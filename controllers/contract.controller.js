@@ -1,9 +1,27 @@
 const express = require('express');
 const Contracts = require('../models/contract.model');
+const User = require('../models/user.model');
 const contractRouter = express.Router();
 
 // create contract
-contractRouter.post('/contract', async (req, res) => {
+async function auth(  req, res, next) {
+        try {
+            const { mobile_no, password } = req.headers
+            const data = await User.exists({ mobile_no, password });
+            if (data) {
+                next();
+            } else {
+                res.send("user not found")
+            }
+        } catch (error) {
+            res.send(error.message).status(404);
+        }
+
+    }
+
+
+
+contractRouter.post('/contract', auth ,async (req, res) => {
     try {
         const user = Contracts(req.body);
         const data = await user.save()
@@ -15,7 +33,7 @@ contractRouter.post('/contract', async (req, res) => {
 })
 
 //lenders who have given loans to at least n borrowers
-contractRouter.get('/contract/total', async (req, res) => {
+contractRouter.get('/contract/total', auth, async (req, res) => {
     const { n } = req.body
     if (n === undefined) {
         return res.send({ message: "Please enter the number of results you want using the 'n' key " })
@@ -63,7 +81,7 @@ contractRouter.get('/contract/total', async (req, res) => {
 })
 
 //Accept a number n as input and return n records sorted ascending by number of people they have given loans
-contractRouter.get('/contract/count', async (req, res) => {
+contractRouter.get('/contract/count', auth, async (req, res) => {
 
     const { n } = req.body
     if (n === undefined) {
@@ -119,7 +137,7 @@ contractRouter.get('/contract/count', async (req, res) => {
 })
 
 // Get All Lenders
-contractRouter.get('/contract/lender', async (req, res) => {
+contractRouter.get('/contract/lender', auth, async (req, res) => {
     try {
         const data = await Contracts.aggregate([
             {
@@ -155,7 +173,7 @@ contractRouter.get('/contract/lender', async (req, res) => {
 })
 
 // Get All Borrower
-contractRouter.get('/contract/borrower', async (req, res) => {
+contractRouter.get('/contract/borrower', auth, async (req, res) => {
 
     try {
         const data = await Contracts.aggregate([
